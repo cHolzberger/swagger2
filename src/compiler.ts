@@ -29,7 +29,7 @@
  */
 
 import * as jsonValidator from 'is-my-json-valid';
-import * as deref from 'json-schema-deref-sync';
+import deref = require('json-schema-deref');
 
 import {CollectionFormat, Definition, Document, Parameter, PathItem} from './schema';
 
@@ -52,6 +52,22 @@ export interface CompiledPath {
   expected: string[];
 }
 
+/*
+ * A wrapper for async deref
+ */
+
+async function derefp(document: any, options?: any): Promise<any> {
+  let p = new Promise<any> ((resolve, reject) => {
+    deref(document, options, (err: any, derefedDocument: any) => {
+      if ( err ) {
+        reject(err);
+      } else {
+        resolve(derefedDocument);
+      }
+    });
+  });
+  return p;
+}
 
 /*
  * We need special handling for query validation, since they're all strings.
@@ -141,9 +157,9 @@ function stringValidator(schema: any) {
 }
 
 
-export function compile(document: Document): Compiled {
+export async function compile(document: Document): Promise<Compiled> {
   // get the de-referenced version of the swagger document
-  let swagger = deref(document);
+  let swagger = await derefp(document);
 
   // add a validator for every parameter in swagger document
   Object.keys(swagger.paths).forEach(pathName => {
@@ -189,4 +205,5 @@ export function compile(document: Document): Compiled {
     }
     return matches[0];
   };
+
 }

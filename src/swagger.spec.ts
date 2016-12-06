@@ -36,7 +36,7 @@ describe('swagger2', () => {
   it('has a validateResponse function', () => assert.equal(typeof swagger.validateResponse, 'function'));
   it('has a compileDocument function', () => assert.equal(typeof swagger.compileDocument, 'function'));
 
-  describe('petstore', () => {
+  describe('petstore', async () => {
     const raw = swagger.loadDocumentSync(__dirname + '/../test/yaml/petstore.yaml');
     const document: swagger.Document | undefined = swagger.validateDocument(raw);
 
@@ -44,7 +44,7 @@ describe('swagger2', () => {
 
     if (document !== undefined) {
       // construct a validation object, pre-compiling all schema and regex required
-      compiled = swagger.compileDocument(document);
+      compiled = await swagger.compileDocument(document);
     }
 
     it('invalid paths are undefined', () => {
