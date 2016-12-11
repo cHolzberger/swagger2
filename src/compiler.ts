@@ -30,6 +30,7 @@
 
 import * as jsonValidator from 'is-my-json-valid';
 import deref = require('json-schema-deref');
+import * as YAML from 'yamljs';
 
 import {CollectionFormat, Definition, Document, Parameter, PathItem} from './schema';
 
@@ -157,9 +158,25 @@ function stringValidator(schema: any) {
 }
 
 
-export async function compile(document: Document): Promise<Compiled> {
-  // get the de-referenced version of the swagger document
-  let swagger = await derefp(document);
+function ymlLoader(ref:string, option:any, fn:any) {
+  console.log(ref);
+  if ( ref.toLowerCase().endsWith(".yml") || ref.toLowerCase().endsWith(".yaml")  ) {
+    console.log(option.baseFolder);
+    var yamlRef = YAML.load(option.baseFolder + ref);
+    return fn(null, yamlRef);
+  }
+  return fn();
+}
+
+export async function compile(document: Document, baseFolder?: string): Promise<Compiled> {
+  let derefOptions:any = {
+    failOnMissing: false,
+    baseFolder: baseFolder,
+    loader: ymlLoader
+  };
+
+    // get the de-referenced version of the swagger document
+  let swagger = await derefp(document, derefOptions);
 
   // add a validator for every parameter in swagger document
   Object.keys(swagger.paths).forEach(pathName => {

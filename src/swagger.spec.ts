@@ -36,16 +36,21 @@ describe('swagger2', () => {
   it('has a validateResponse function', () => assert.equal(typeof swagger.validateResponse, 'function'));
   it('has a compileDocument function', () => assert.equal(typeof swagger.compileDocument, 'function'));
 
-  describe('petstore', async () => {
-    const raw = swagger.loadDocumentSync(__dirname + '/../test/yaml/petstore.yaml');
-    const document: swagger.Document | undefined = swagger.validateDocument(raw);
 
+  describe('petstore', () => {
     let compiled: Compiled;
-
-    if (document !== undefined) {
-      // construct a validation object, pre-compiling all schema and regex required
-      compiled = await swagger.compileDocument(document);
-    }
+    before(() => {
+      const raw = swagger.loadDocumentSync(__dirname + '/../test/yaml/petstore.yaml');
+      const document: swagger.Document | undefined = swagger.validateDocument(raw);
+      if (document !== undefined) {
+        // construct a validation object, pre-compiling all schema and regex required
+        return swagger.compileDocument(document).then((compiledDocument:any) => {
+          compiled=compiledDocument;
+        });
+      } else {
+        throw ("Invalid document specified");
+      }
+    });
 
     it('invalid paths are undefined', () => {
       assert.equal(undefined, compiled('/v1/bad'));
@@ -65,7 +70,11 @@ describe('swagger2', () => {
     });
 
     describe('/v1/pets', () => {
-      let compiledPath = compiled('/v1/pets');
+      let compiledPath:any;
+
+      before( () => {
+        compiledPath = compiled('/v1/pets');
+      });
 
       it('do not allow DELETE', () => {
         assert.equal(undefined, swagger.validateRequest(compiledPath, 'delete', {}, {}));
@@ -419,16 +428,31 @@ describe('swagger2', () => {
 
 
   // TODO: load relative references so we can validate petstore-separate
-  // describe('petstore-separate', () => {
-  //   const raw = swagger.loadDocumentSync(__dirname + '/../test/yaml/petstore-separate/spec/swagger.yaml');
-  //   const document: swagger.Document = swagger.validateDocument(raw);
-  //   let compiled = swagger.compileDocument(document);
-  //   describe('/api/pets', () => {
-  //     let compiledPath = compiled('/api/pets');
-  //     describe('post', () => {
-  //       assert.deepStrictEqual(swagger.validateRequest(compiledPath, 'post', {}, { x: 'y' }), []);
-  //     });
-  //   });
-  // });
+   describe('petstore-separate', async () => {
+     let compiled: Compiled;
+     before(() => {
+       const path = __dirname + '/../test/yaml/petstore-separate/spec/';
+       const raw = swagger.loadDocumentSync(path + 'swagger.yaml');
+       const document: swagger.Document | undefined = swagger.validateDocument(raw);
+       if (document !== undefined) {
+         // construct a validation object, pre-compiling all schema and regex required
+         return swagger.compileDocument(document, path).then((compiledDocument:any) => {
+           compiled=compiledDocument;
+         });
+       } else {
+         throw ("Invalid document specified");
+       }
+     });
+
+     describe('/api/pets', () => {
+     it('post', () => {
+       let compiledPath = compiled('/api/pets');
+       if ( compiledPath ) {
+        console.dir( (<any> compiledPath.path)['post'].parameters);
+      }
+         assert.deepStrictEqual(swagger.validateRequest(compiledPath, 'post', {}, { x: 'y' }), []);
+       });
+     });
+   });
 
 });
