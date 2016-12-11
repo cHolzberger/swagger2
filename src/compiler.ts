@@ -28,6 +28,7 @@
  THE SOFTWARE.
  */
 
+const path = require("path");
 import * as jsonValidator from 'is-my-json-valid';
 import deref = require('json-schema-deref');
 import * as YAML from 'yamljs';
@@ -158,12 +159,20 @@ function stringValidator(schema: any) {
 }
 
 
-function ymlLoader(ref:string, option:any, fn:any) {
+async function ymlLoader(ref:string, option:any, fn:any) {
   console.log(ref);
   if ( ref.toLowerCase().endsWith(".yml") || ref.toLowerCase().endsWith(".yaml")  ) {
     console.log(option.baseFolder);
-    var yamlRef = YAML.load(option.baseFolder + ref);
-    return fn(null, yamlRef);
+    var yamlRef = YAML.load(path.join(option.baseFolder, ref));
+
+    let derefOptions = {
+      failOnMissing: option.failOnMissing,
+      loader: ymlLoader,
+      baseFolder: path.dirname(path.join(option.baseFolder, ref))
+    }
+
+    let resolved = await derefp(yamlRef, derefOptions);
+    return fn(null, resolved);
   }
   return fn();
 }

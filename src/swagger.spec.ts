@@ -428,31 +428,31 @@ describe('swagger2', () => {
 
 
   // TODO: load relative references so we can validate petstore-separate
-   describe('petstore-separate', async () => {
-     let compiled: Compiled;
-     before(() => {
-       const path = __dirname + '/../test/yaml/petstore-separate/spec/';
-       const raw = swagger.loadDocumentSync(path + 'swagger.yaml');
-       const document: swagger.Document | undefined = swagger.validateDocument(raw);
-       if (document !== undefined) {
-         // construct a validation object, pre-compiling all schema and regex required
-         return swagger.compileDocument(document, path).then((compiledDocument:any) => {
-           compiled=compiledDocument;
-         });
-       } else {
-         throw ("Invalid document specified");
-       }
-     });
-
-     describe('/api/pets', () => {
-     it('post', () => {
-       let compiledPath = compiled('/api/pets');
-       if ( compiledPath ) {
-        console.dir( (<any> compiledPath.path)['post'].parameters);
+  describe('petstore-separate', async () => {
+    let compiled: Compiled;
+    before(() => {
+      const path = __dirname + '/../test/yaml/petstore-separate/spec/';
+      const raw = swagger.loadDocumentSync(path + 'swagger.yaml');
+      const document: swagger.Document | undefined = swagger.validateDocument(raw);
+      if (document !== undefined) {
+        // construct a validation object, pre-compiling all schema and regex required
+        return swagger.compileDocument(document, path).then((compiledDocument: any) => {
+          compiled = compiledDocument;
+        });
+      } else {
+        throw ("Invalid document specified");
       }
-         assert.deepStrictEqual(swagger.validateRequest(compiledPath, 'post', {}, { x: 'y' }), []);
-       });
-     });
-   });
+    });
+
+    describe('/api/pets', () => {
+      it('post', () => {
+        let compiledPath = compiled('/api/pets');
+        if (compiledPath) {
+          //  console.dir( (<any> compiledPath.path)['post'].parameters);
+        }
+        assert.deepStrictEqual(swagger.validateRequest(compiledPath, 'post', {}, { x: 'y' }), []);
+      });
+    });
+  });
 
 });
